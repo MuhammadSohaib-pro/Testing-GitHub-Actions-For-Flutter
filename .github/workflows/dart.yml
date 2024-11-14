@@ -49,6 +49,11 @@ jobs:
       - name: Build Web
         run: flutter build web --release
 
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+        shell: bash
+
       # - name: Build iOS
       #   run: |
       #     flutter build ios --release --no-codesign
@@ -65,6 +70,9 @@ jobs:
         with:
           artifacts: "build/app/outputs/apk/release/*.apk,build/web/**/*"
           # build/ios/iphoneos/app.ipa
+          tag: ${{ github.ref_name }}-${{ steps.timestamp.outputs.timestamp }}
           makeLatest: true
           generateReleaseNotes: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          replacesArtifacts: true
