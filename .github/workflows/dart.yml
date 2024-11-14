@@ -45,7 +45,7 @@ jobs:
       - name: Build iOS
         run: |
           flutter build ios --release --no-codesign
-          cd build/ios/iphoneos
+          cd build/ios
           mkdir Payload
           cd Payload
           cp -r ../Runner.app .
