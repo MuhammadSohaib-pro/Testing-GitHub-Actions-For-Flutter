@@ -4,6 +4,11 @@ on:
     branches: [main]
   push:
     branches: [main]
+    tags:
+      - 'v*'  # Trigger on version tags
+
+permissions:
+  contents: write  # Add explicit permissions for creating releases
 
 jobs:
   build:
@@ -12,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -54,10 +61,10 @@ jobs:
 
       - name: Create Release
         uses: ncipollo/release-action@v1.13.0
+        if: startsWith(github.ref, 'refs/tags/')  # Only create release on tags
         with:
-          artifacts: |
-            build/app/outputs/apk/release/*,
-            build/web/*
+          artifacts: "build/app/outputs/apk/release/*.apk,build/web/**/*"
           # build/ios/iphoneos/app.ipa
-          tag: v1.0.${{ github.run_number }}
+          makeLatest: true
+          generateReleaseNotes: true
           token: ${{ secrets.GITHUB_TOKEN }}
