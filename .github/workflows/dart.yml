@@ -7,18 +7,9 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}  # Fixed indentation here - aligned with 'build:'
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '12'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -36,33 +27,22 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      - name: Build Web
-        if: matrix.os == 'ubuntu-latest'
-        run: flutter build web --release
-
       - name: Build Android APK
-        if: matrix.os != 'macos-latest'
         run: flutter build apk --release --split-per-abi
-
-      - name: Build iOS IPA
-        if: matrix.os == 'macos-latest'
-        run: flutter build ipa --no-codesign
 
       - name: Upload Build Artifacts
         if: success()
         uses: actions/upload-artifact@v3
         with:
-          name: flutter-builds-${{ matrix.os }}
+          name: flutter-builds-windows
           path: |
-            build/web/
             build/app/outputs/flutter-apk/*.apk
-            build/ios/ipa/*.ipa
           retention-days: 7
 
       - name: Create Release
-        if: matrix.os == 'ubuntu-latest' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/app/outputs/flutter-apk/*.apk,build/ios/ipa/*.ipa,build/web/*"
+          artifacts: "build/app/outputs/flutter-apk/*.apk"
           tag: v1.0.${{ github.run_number }}
           token: ${{ secrets.GITHUB_TOKEN }}
