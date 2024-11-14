@@ -1,0 +1,86 @@
+on:
+  pull_request:
+    branches:
+      - main
+      # - master // you can add multiple branches for pull request 
+  push:
+    branches:
+      - main
+      # - master // you can add multiple branches on code push
+      # - develop // you can add multiple branches on code push
+
+name: "Build & Release with Multi-OS Support and Web Testing"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '12'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+          architecture: x64
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Flutter Analyzer
+        run: flutter analyze
+
+      # Run tests for all platforms
+      - name: Run Unit Tests
+        run: flutter test
+
+      # Web-specific steps, only for Ubuntu as it supports headless Chrome by default
+      - name: Run Web Tests
+        if: matrix.os == 'ubuntu-latest'
+        run: flutter test --platform chrome
+
+      - name: Build Web
+        if: matrix.os == 'ubuntu-latest'
+        run: flutter build web --release
+
+      # Build Android APK (only on Linux and Windows)
+      - name: Build Android APK
+        if: matrix.os != 'macos-latest'
+        run: flutter build apk --release --split-per-abi
+
+      # Build iOS IPA (only on macOS)
+      - name: Build iOS IPA
+        if: matrix.os == 'macos-latest'
+        run: flutter build ipa --no-codesign
+
+      - name: Upload Artifacts
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v2
+        with:
+          name: "Flutter Build Artifacts - ${{ matrix.os }}"
+          path: |
+            build/app/outputs/apk/release/*
+            build/ios/ipa/*.ipa
+            build/web/*
+  
+      - name: Push to Releases
+        if: matrix.os == 'ubuntu-latest'
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: |
+            build/app/outputs/apk/release/*
+            build/ios/ipa/*.ipa
+            build/web/*
+          tag: v1.0.${{ github.run_number }}
+          token: ${{ secrets.TOKEN }}

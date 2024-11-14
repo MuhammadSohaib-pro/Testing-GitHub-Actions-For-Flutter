@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"vault-fits-v2","appId":"1:549173285293:android:640b35ef73658a199cd124","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"vault-fits-v2","configurations":{"android":"1:549173285293:android:640b35ef73658a199cd124","ios":"1:549173285293:ios:7715262cec592ed69cd124"}}}}}}
