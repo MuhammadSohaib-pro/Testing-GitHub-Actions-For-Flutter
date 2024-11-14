@@ -1,9 +1,9 @@
 name: Flutter Build
 on:
   pull_request:
-    branches: [main, master]
+    branches: [main]
   push:
-    branches: [main, master, develop]
+    branches: [main]
 
 jobs:
   build:
@@ -17,8 +17,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: "zulu"
-          java-version: "17"
-          cache: "gradle"
+          java-version: "12"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -42,11 +41,6 @@ jobs:
 
       - name: Build Web
         run: flutter build web --release
-
-      - name: Set up iOS build dependencies
-        run: |
-          choco install xcode
-          choco install cocoapods
 
       - name: Build iOS
         run: |
