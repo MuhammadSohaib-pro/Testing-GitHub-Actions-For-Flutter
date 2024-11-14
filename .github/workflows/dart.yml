@@ -42,22 +42,22 @@ jobs:
       - name: Build Web
         run: flutter build web --release
 
-      - name: Build iOS
-        run: |
-          flutter build ios --release --no-codesign
-          cd build/ios
-          mkdir Payload
-          cd Payload
-          cp -r ../Runner.app .
-          cd ..
-          Compress-Archive -Path Payload -DestinationPath app.ipa
+      # - name: Build iOS
+      #   run: |
+      #     flutter build ios --release --no-codesign
+      #     cd build/ios
+      #     mkdir Payload
+      #     cd Payload
+      #     cp -r ../Runner.app .
+      #     cd ..
+      #     Compress-Archive -Path Payload -DestinationPath app.ipa
 
       - name: Create Release
         uses: ncipollo/release-action@v1.13.0
         with:
           artifacts: |
             build/app/outputs/apk/release/*,
-            build/web/*,
-            build/ios/iphoneos/app.ipa
+            build/web/*
+          # build/ios/iphoneos/app.ipa
           tag: v1.0.${{ github.run_number }}
           token: ${{ secrets.GITHUB_TOKEN }}
