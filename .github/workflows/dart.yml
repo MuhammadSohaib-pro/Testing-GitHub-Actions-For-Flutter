@@ -1,48 +1,72 @@
 name: Flutter Build
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [main, master]
+  push:
+    branches: [main, master, develop]
 
 jobs:
   build:
+    name: Build & Release
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+          cache: "gradle"
+
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.3'
           channel: 'stable'
           architecture: x64
+          cache: true
           
       - name: Install dependencies
         run: flutter pub get
-
-      - name: Analyze project source
+        
+      - name: Run Flutter analyzer
         run: flutter analyze
 
-      - name: Run tests
+      - name: Run Flutter unit tests
         run: flutter test
+        
+      - name: Run Flutter integration tests
+        run: flutter test integration_test
 
       - name: Build Android APK
         run: flutter build apk --release --split-per-abi
 
-      - name: Upload Build Artifacts
-        if: success()
-        uses: actions/upload-artifact@v3
-        with:
-          name: flutter-builds-windows
-          path: |
-            build/app/outputs/flutter-apk/*.apk
-          retention-days: 7
+      - name: Build Web
+        run: flutter build web --release
+
+      - name: Set up iOS build dependencies
+        run: |
+          choco install xcode
+          choco install cocoapods
+
+      - name: Build iOS
+        run: |
+          flutter build ios --release --no-codesign
+          cd build/ios/iphoneos
+          mkdir Payload
+          cd Payload
+          cp -r ../Runner.app .
+          cd ..
+          Compress-Archive -Path Payload -DestinationPath app.ipa
 
       - name: Create Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@v1.13.0
         with:
-          artifacts: "build/app/outputs/flutter-apk/*.apk"
+          artifacts: |
+            build/app/outputs/apk/release/*,
+            build/web/*,
+            build/ios/iphoneos/app.ipa
           tag: v1.0.${{ github.run_number }}
           token: ${{ secrets.GITHUB_TOKEN }}
